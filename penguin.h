@@ -1,7 +1,6 @@
 #ifndef PENGUIN_H
 #define PENGUIN_H
 
-// Do you want a two seperate coordinates or a struct? Your Choice.
 class Penguin 
 {
 public: 
@@ -12,7 +11,6 @@ private:
   int xCord;
   int yCord;
   bool alive;
-  void fishMove();
-  void whaleMove();
-  char closestAnimal();  
+  void moveToFish(closeFish, seaArr[], fishArr[]);
+  void moveIfOneWhale(Sea seaArr[], Killer_Whale *whale); 
 }
