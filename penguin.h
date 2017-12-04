@@ -12,5 +12,7 @@ private:
   int yCord;
   bool alive;
   void moveToFish(closeFish, seaArr[], fishArr[]);
-  void moveIfOneWhale(Sea seaArr[], Killer_Whale *whale); 
+  void moveIfOneWhale(Sea seaArr[], Killer_Whale *whale1);
+  void moveIfTwoWhales(Sea seaArr[], Killer_Whale *whale1, Kille_Whale *whale2); 
+  int numMoves(); 
 }
