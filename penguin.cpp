@@ -8,204 +8,433 @@
 #include <cmath>
 using namespace std;
 
-// BIG PROBLEM: HOW TO CODE FOR THE AMOUNT OF TIMES THE PENGUIN IS MOVING ACCURATELY BY STILL UPDATING EVERYTHING AFTER EACH TURN??
-
 Penguin::Penguin()
 {
-  health = ((rand() % 20) + 1) + 60;  
+  health = ((rand() % 20) + 1) + 60;
   alive = false;
-  xCord = -1; 
+  xCord = -1;
   yCord = -1;
 }
 
-// Description: 
-// Precondition: 
-// Postcondition: 
-void Penguin::move(Sea seaArr[], Fish fishArr[], Killer_Whale *whale1, Killer_Whale *whale2)
+// Description: Moves the pengin a designated number of spaces (which is based on health) depending on it's condition
+// Precondition: NONE
+// Postcondition: Penguin has been moved
+void Penguin::move(Sea *seaGrid, Fish fishArr[], Killer_Whale *whale1, Killer_Whale *whale2)
 {
-  // First check to see if whale is near by. Same code for whether a whale exists or fish and whale exist
-  if (sqrt(pow(xCord - whale1.getXCord(),2) + pow(yCord - whale1.getYCord(),2)) <= 8 && sqrt(pow(xCord - whale1.getXCord(),2) + pow(yCord - whale1.getYCord(),2)) <= 8) // Both whales within 8 units
+  double distWhale1;
+  double distWhale2;
+  // Both whales within 8 units
+  if (whaleDist(whale1) <= 8.00 && whaleDist(whale2) <= 8.00)
   {
-    moveIfTwoWhales(seaArr[], whale1, whale2);
-  } 
-  else if (sqrt(pow(xCord - whale1.getXCord(),2) + pow(yCord - whale1.getYCord(),2)) <= 8) // Only whale1 is within 8 units
-  {
-    moveIfOneWhale(seaArr[], whale1);
+    distWhale1 = whaleDist(whale1, xCord, yCord);
+    distWhale2 = whaleDist(whale2, xCord, yCord);
+    moveIfTwoWhales(seaGrid, whale1, whale2, distWhale1, distWhale2, fishArr);
   }
-  else if (sqrt(pow(xCord - whale2.getXCord(),2) + pow(yCord - whale2.getYCord(),2)) <= 8) // Only whale2 is within 8 units
+  else if (whaleDist(whale1) <= 8.00) // Whale1 is within 8 units
   {
-    moveIfOneWhale(seaArr[], whale2);
+    distWhale1 = whaleDist(whale1, xCord, yCord);
+    moveIfOneWhale(seaGrid, whale1, distWhale1);
   }
-  else // Check to see if at least one fish exists fish within 8 units. The index number of the closest fish is saved.
+  else if (whaleDist(whale2) <= 8.00) // Whale2 is within 8 units
   {
-    int closeFish = -1; // Index of the closest fish. By default set to -1, based on the assumption no fish is within 8 units to start.
-    double distance = 8.0; // The distance between the penguin and the closest fish. By default set to 8.
-    
-    for (int i = 0; i < fishArr.size(); i++) // Cycling through all fish in the array
+    distWhale2 = whaleDist(whale2, xCord, yCord);
+    moveIfOneWhale(seaGrid, whale2, distWhale2);
+  }
+  else // Either there is only fish OR no fish or whales
+  {
+    // Finds the index number of the closest fish
+    int fishIndex = -1;
+    double distance = 8.00;
+
+    for (int i = 0; i < fishArr.size(); i++)
     {
-      if (sqrt(pow(xCord - fishArr[i].getXCord(),2) + pow(yCord - fishArr[i].getYCord(),2)) <= 8) // Checking to see if the fish is within 8 units 
+      if (fishDistance(fishArr[i], xCord, yCord) <= 8.00) // Fish within 8 units
       {
-        if (distance > sqrt(pow(xCord - whale1.getXCord(),2) + pow(yCord - whale1.getYCord(),2)));
+        if (distance > fishDistance(fishArr[i], xCord, yCord))
         {
-          distance = sqrt(pow(xCord - whale1.getXCord(),2) + pow(yCord - whale1.getYCord(),2));
-          closeFish = i;
+          distance = fishDistance(fishArr[i], xCord, yCord) // Adjusts distance to closest fish
+          fishIndex = i;
         }
       }
     }
 
-    if (closeFish > 0) 
+    if (fishIndex > 0)
     {
-      moveToFish(closeFish, seaArr[], fishArr[]); // Function to move the penguin closer to the closest fish. IN PROGRESS
-    }                                                                                                                                                                                   
+      moveToFish(seaGrid, fishArr, fishIndex, distance)
+    }
+    else // No fish or whales within 8 units
+    {
+      moveRandom(seaGrid);
+    }
   }
 }
 
-//-------------------------------------------------------------------------------------------------------
-// Description: Moves penguin a designated number of times towards the closest fish available
-// Precondition: 
-// Postcondition: 
-
-// NOTE: CURRENTLY NOT CODED TO HANDLE INTERFERING PENGUINS AND STOPPING PENGUIN MOVEMENT WHEN FISH IS EATEN
-void Penguin::moveToFish(int closeFish, Sea seaArr[], Fish fishArr[])
+// Description: Moves Pengin towards fish
+// Preconditions: NONE
+// Postcondition: Penguin has been moved
+void Penguin::moveToFish(Sea *seaGrid, Fish fishArr[], int fishIndex, double distance)
 {
-  int loopNum = numMoves()
-  
+  int loopNum = numMoves();
+  int startX, startY;
   for (int i = 0; i < loopNum; i++)
   {
-    if (xCord != fishArr[closeFish].getXCord() && yCord != fishArr[closeFish].getYCord())
-    {
-      if (fishArr[closeFish].getXCord() < xCord && fishArr[closeFish].getYCord() > yCord)
-      {
-        xCord -= 1;
-        yCord += 1;
-      }
-      else if (fishArr[closeFish].getXCord() > xCord && fishArr[closeFish].getYCord() > yCord)
-      {
-        xCord += 1;
-        yCord += 1;
-      }
-      else if (fishArr[closeFish].getXCord() < xCord && fishArr[closeFish].getYCord() < yCord)
-      {
-        xCord -= 1;
-        yCord -= 1;
-      }
-      else if (fishArr[closeFish].getXCord() > xCord && fishArr[closeFish].getYCord() < yCord)
-      {
-        xCord += 1;
-        yCord -= 1;
-      }
-    }
-    else
-    {
-      if (xCord == fishArr[closeFish].getXCord())
-      {
-        if (fishArr[closeFish].getYCord() < yCord)
-        {
-          yCord -= 1;
-        }
-        else if (fishArr[closeFish].getYCord() > yCord)
-        {
-          yCord += 1;
-        }
-      }
-      else if (yCord == fishArr[closeFish].getYCord())
-      {
-        if (fishArr[closeFish].getXCord() > xCord)
-        {
-          xCord += 1;
-        }
-        else if(fishArr[closeFish].getXCord() < xCord) 
-        {
-          xCord -= 1;
-        }
-      }
-    }
-  }
-}
-
-//-------------------------------------------------------------------------------------------------------
-
-// Description: 
-// Precondition: 
-// Postcondition: 
-
-// NOTE: CURRENTLY NOT CODED TO HANDLE INTERFERING PENGUINS 
-void Penguin::moveIfOneWhale(Sea seaArr[], Killer_Whale *whale)
-{
-  if (whale.getXCord() == xCord)
-  {
-    if (whale.getYcord() < yCord)
-    {
-      yCord += 1;
-    }
-    else if (whale.getYCord() > yCord)
-    {
-      yCord -= 1;
-    }
-  }
-  else if (whale.getYCod() == yCord)
-  {
-    if (whale.getXcord() < xCord)
-    {
-      xCord += 1;
-    }
-    else if (whale.getXCord() > xCord)
+    startX = xCord;
+    startY = yCord;
+    if (seaGrid.filled(xCord-1, yCord) == false && fishDistance(fishArr[fishIndex], xCord-1, yCord) <= distance)
     {
       xCord -= 1;
     }
-  }
-  else if ((whale.getXCord() > xCord && whale.getYCord() > yCord) || (whale.getXCord() < xCord && whale.getYCord() > yCord))
-  {
-    yCord -= 1;
-  }
-  else if ((whale.getXCord() < xCord && whale.getYCord() < yCord) || (whale.getXCord() > xCord && whale.getYCord() < yCord))
-  {
-    yCord += 1;
+    else if (seaGrid.filled(xCord-1, yCord+1) == false && fishDistance(fishArr[fishIndex], xCord-1, yCord+1) <= distance)
+    {
+      xCord -= 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord, yCord+1) == false && fishDistance(fishArr[fishIndex], xCord, yCord+1) <= distance)
+    {
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord+1) == false && fishDistance(fishArr[fishIndex], xCord+1, yCord+1) <= distance)
+    {
+      xCord += 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord) == false && fishDistance(fishArr[fishIndex], xCord+1, yCord) <= distance)
+    {
+      xCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord-1) == false && fishDistance(fishArr[fishIndex], xCord+1, yCord-1) <= distance)
+    {
+      xCord += 1;
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord, yCord-1) == false && fishDistance(fishArr[fishIndex], xCord, yCord-1) <= distance)
+    {
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord-1, yCord-1) == false && fishDistance(fishArr[fishIndex], xCord-1, yCord-1) <= distance)
+    {
+      xCord -= 1;
+      yCord -= 1;
+    }
+
+    distance = fishDistance(fishArr[fishIndex], xCord, yCord);
+
+    if (startX != xCord || startY != yCord)
+    {
+      health -= 1;
+    }
+
+    if (fishArr[fishIndex].getXCord() == xCord && fishArr[fishIndex].getYCord() == yCord)
+    {
+      seaGrid.replace('P', xCord, yCord);
+      health += fishArr[fishIndex].getHealth();
+      fishArr[fishIndex].setDead(xCord, yCord);
+      break;
+    }
+    else
+    {
+      seaGrid.replace('P', xCord, yCord);
+    }
+
+    if (health <= 0)
+    {
+      alive = false;
+      xCord = -1;
+      yCord = -1;
+      break;
+    }
   }
 }
 
-//-------------------------------------------------------------------------------------------------------
-
-// Description: 
-// Precondition: 
-// Postcondition: 
-void moveIfTwoWhales(Sea seaArr[], Killer_Whale *whale1, Kille_Whale *whale2)
+// Description: Moves penguin away from one whale
+// Precondition: NONE
+// Postcondition: Penguin has been moved
+void Penguin::moveIfOneWhale(Sea *seaGrid, Killer_Whale *whale, double distWhale, Fish fishArr[])
 {
-  if (whale1.getXCord() < xCord && whale2.getXCord() < xCord)
+  int loopNum = numMoves()
+  int seaSize = seaGrid.getSize();
+  int startX, startY;
+  bool fishEaten = false;
+
+  for (int i = 0; i < loopNum; i++)
   {
-    xCord += 1;
+    startX = xCord;
+    startY = yCord
+
+    if (seaGrid.filled(xCord-1, yCord) == false && (whaleDist(whale, xCord-1, yCord) >= distWhale) && (xCord != 0))
+    {
+      xCord -= 1;
+    }
+    else if (seaGrid.filled(xCord-1, yCord+1) == false && (whaleDist(whale, xCord-1, yCord+1) >= distWhale) && (xCord != 0) && (yCord != seaSize-1))
+    {
+      xCord -= 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord, yCord+1) == false && (whaleDist(whale, xCord, yCord+1) >= distWhale) && (yCord != seaSize-1))
+    {
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord+1) == false && (whaleDist(whale, xCord+1, yCord+1) >= distWhale) && (xCord != seaSize-1) && (yCord != seaSize-1))
+    {
+      xCord += 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord) == false && (whaleDist(whale, xCord+1, yCord) >= distWhale) && (xCord != seaSize-1))
+    {
+      xCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord-1) == false && (whaleDist(whale, xCord+1, yCord-1) >= distWhale) && (xCord != seaSize-1) && (yCord != 0))
+    {
+      xCord += 1;
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord, yCord-1) == false && (whaleDist(whale, xCord, yCord-1) >= distWhale) && (yCord != 0))
+    {
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord-1, yCord-1) == false && (whaleDist(whale, xCord-1, yCord-1) >= distWhale) && (xCord != 0) && (yCord != 0))
+    {
+      xCord -= 1;
+      yCord -= 1;
+    }
+
+    distWhale = whaleDist(whale, xCord, yCord);
+
+    if (startX != xCord || startY != yCord)
+    {
+      health -= 1;
+    }
+
+    for (int j = 0; j < fishArr.size(); j++)
+    {
+      if (fishArr[j].getXCord() == xCord && fishArr[j].getYCord() == yCord)
+      {
+        seaGrid.replace('P', xCord, yCord);
+        health += fishArr[j].getHealth();
+        fishArr[j].setDead(xCord, yCord);
+        fishEaten = true;
+        break;
+      }
+    }
+
+    if (fishEaten)
+    {
+      break;
+    }
+
+    seaGrid.replace('P', xCord, yCord);
+
+    if (health <= 0)
+    {
+      alive = false;
+      xCord = -1;
+      yCord = -1;
+      break;
+    }
   }
-  else if (whale1.getXCord() > xCord && whale2.getXCord() > xCord)
-  {
-    xCord -= 1;
-  }
-  else if (whale1.getXCord() == xCord && whale2.getXCord() == xCord)
-  {
-    xCord += 1; // Code code be going up or down based on prefrence
-  }
-  else if ((whale1.getXCord() < xCord && whale1.getYCord() < yCord && whale2.getXCord() > xCord && whale2.yCord() > yCord) || (whale2.getXCord() < xCord && whale2.getYCord() < yCord && whale1.getXCord() > xCord && whale1.yCord() > yCord))
-  {
-    xCord -= 1;
-    yCord += 1; 
-    // Coded to go diagonal to the right upward. Can be coded to go left as well
-  }
-  else if ((whale1.getXCord() > xCord && whale1.getYCord() < yCord && whale2.getXCord() < xCord && whale2.yCord() > yCord) || (whale2.getXCord() < xCord && whale2.getYCord() < yCord && whale1.getXCord() > xCord && whale1.yCord() > yCord))
-  {
-    xCord += 1;
-    yCord += 1;
-    // Coded to go diagional to the right downward. Can be coded to go left as well
-  }
-  else if ((whale1.getXCord() == yCord && whale2.getYCord() > yCord) || (whale2.getXCord() == yCord && whale1.getYCord() > yCord))
-  {
-    yCord -= 1;
-  }
-  else if ((whale1.getXCord() == yCord && whale2.getYCord < yCord) || (whale2.getXCord() == yCord && whale1.getYCord() < yCord))
-  {
-    yCord += 1;
-  }
-  else if ()
 }
 
+// Descrioption: Moves the penguin away from two whales
+// Precondition: NONE
+// Postcondition: Penguin has been moved
+void Penguin::moveIfTwoWhales(Sea *seaGrid, Killer_Whale *whale1, Kille_Whale *whale2, double distWhale1, double distWhale2, Fish fishArr[]);
+{
+  int loopNum = numMoves();
+  int seaSize = seaGrid.getSize();
+  int startX, startY;
+  bool fishEaten = false;
+
+  for (int i = 0; i < loopNum; i++)
+  {
+    startX = xCord;
+    startY = yCord
+
+    if (seaGrid.filled(xCord-1, yCord) == false  && (whaleDist(whale1, xCord-1, yCord) >= distWhale1) && (whaleDist(whale2, xCord-1, yCord) >= distWhale2) && (xCord != 0))
+    {
+      xCord -= 1;
+    }
+    else if (seaGrid.filled(xCord-1, yCord+1) == false && (whaleDist(whale1, xCord-1, yCord+1) >= distWhale1) && (whaleDist(whale2, xCord-1, yCord+1) >= distWhale2) && (xCord != 0) && (yCord != seaSize-1))
+    {
+      xCord -= 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord, yCord+1) == false && (whaleDist(whale1, xCord, yCord+1) >= distWhale1) && (whaleDist(whale2, xCord, yCord+1) >= distWhale2) && (yCord != seaSize-1))
+    {
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord+1) == false && (whaleDist(whale1, xCord+1, yCord+1) >= distWhale1) && (whaleDist(whale2, xCord+1, yCord+1) >= distWhale2) && (xCord != seaSize-1) && (yCord != seaSize-1))
+    {
+      xCord += 1;
+      yCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord) == false && (whaleDist(whale1, xCord+1, yCord) >= distWhale1) && (whaleDist(whale2, xCord+1, yCord) >= distWhale2) && (xCord != seaSize-1))
+    {
+      xCord += 1;
+    }
+    else if (seaGrid.filled(xCord+1, yCord-1) == false && (whaleDist(whale1, xCord+1, yCord+1) >= distWhale1) && (whaleDist(whale2, xCord+1, yCord+1) >= distWhale2) && (xCord != seaSize-1) && (yCord != 0))
+    {
+      xCord += 1;
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord, yCord-1) == false && (whaleDist(whale1, xCord, yCord-1) >= distWhale1) && (whaleDist(whale2, xCord, yCord-1) >= distWhale2) && (yCord != 0))
+    {
+      yCord -= 1;
+    }
+    else if (seaGrid.filled(xCord-1, yCord-1) == false && (whaleDist(whale1, xCord-1, yCord-1) >= distWhale1) && (whaleDist(whale2, xCord-1, yCord-1) >= distWhale2) && (xCord != 0) && (yCord != 0))
+    {
+      xCord -= 1;
+      yCord -= 1;
+    }
+
+    distWhale1 = whaleDist(whale1, xCord, yCord);
+    distWhale2 = whaleDist(whale2, xCord, yCord);
+
+    if (startX != xCord || startY != yCord)
+    {
+      health -= 1;
+    }
+
+    for (int j = 0; j < fishArr.size(); j++)
+    {
+      if (fishArr[j].getXCord() == xCord && fishArr[j].getYCord() == yCord)
+      {
+        seaGrid.replace('P', xCord, yCord);
+        health += fish[j].getHealth();
+        fishArr[j].setDead(xCord, yCord);
+        fishEaten = true;
+        break;
+      }
+    }
+
+    if (fishEaten)
+    {
+      break;
+    }
+
+    seaGrid.replace('P', xCord, yCord);
+
+    if (health <= 0)
+    {
+      alive = false;
+      xCord = -1;
+      yCord = -1;
+      break;
+    }
+  }
+}
+
+// Description: Moves the penguin in a random direction
+// Precondition: NONE
+// Postcondition: Penguin has been moved
+void Penguin::moveRandom(Sea *seaGrid)
+{
+  int seaSize = seaGrid.getSize();
+  int loopNum = numMoves();
+  int startX;
+  int startY;
+  bool turn = true;
+  int randNum;
+  for (int i = 0; i < loopNum; i++)
+  {
+    startX = xCord;
+    startY = yCord;
+    while (turn)
+    {
+      randNum = (rand() % 8) + 1;
+      switch(randNum)
+      {
+        case 1:
+          if (seaGrid.filled(xCord-1, yCord) == false && (xCord != 0))
+          {
+            xCord -= 1;
+            turn = false;
+          }
+          break;
+        case 2:
+          if (seaGrid.filled(xCord-1, yCord+1) == false && (xCord != 0) && (yCord != seaSize-1))
+          {
+            xCord -= 1;
+            yCord += 1;
+            turn = false;
+          }
+          break;
+        case 3:
+          if (seaGrid.filled(xCord, yCord+1) == false && (yCord != seaSize-1))
+          {
+            yCord += 1;
+            turn = false;
+          }
+          break;
+        case 4:
+          if (seaGrid.filled(xCord+1, yCord+1) == false && (xCord != seaSize-1) && (yCord != seaSize-1))
+          {
+            xCord += 1;
+            yCord += 1;
+            turn = false;
+          }
+          break;
+        case 5:
+          if (seaGrid.filled(xCord+1, yCord) == false && (xCord != seaSize-1))
+          {
+            xCord += 1;
+            turn = false;
+          }
+          break;
+        case 6:
+          if (seaGrid.filled(xCord+1, yCord-1) == false && (xCord != seaSize-1) && (yCord != 0))
+          {
+            xCord += 1;
+            yCord -= 1;
+            turn = false;
+          }
+          break;
+        case 7:
+          if (seaGrid.filled(xCord, yCord-1) == false && (yCord != 0))
+          {
+            yCord -= 1;
+            turn = false;
+          }
+          break;
+        case 8:
+          if (seaGrid.filled(xCord-1, yCord-1) == false && (xCord != 0) && (yCord != 0))
+          {
+            xCord -= 1;
+            yCord -= 1;
+            turn = false;
+          }
+          break;
+      }
+    }
+    if (startX != xCord || startY != yCord)
+    {
+      health -= 1;
+      turn = false;
+    }
+    seaGrid.replace('P', xCord, yCord);
+  }
+}
+
+// Description: Finds distance between penguin and a fish
+// Precondition: NONE
+// Postcondition: Returns the distance between the penguin and the fish
+double Penguin::fishDistance(Fish fish, int x, int y)
+{
+  double dist = sqrt(pow(x - fish.getXCord(),2) + pow(y - fish.getYCord(),2))
+  return dist;
+}
+
+// Description: Finds distance between penguin and a whale
+// Precondition: NONE
+// Postcondition: Returns the distance between the penguin and the whale
+double Penguin::whaleDist(Killer_Whale whale, int x, int y)
+{
+  double dist = sqrt(pow(x - whale.getXCord(),2) + pow(y - whale.getYCord(),2))
+  return dist;
+}
+
+// Description: Determines number of moves penguin needs to take based on health
+// Precondition: NONE
+// Postcondition: Returns number of moves penguin will take
 int Penguin::numMoves()
 {
   if (health >= 81 && health <= 100)
