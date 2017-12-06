@@ -1,18 +1,28 @@
 #ifndef SEA_H
 #define SEA_H
+#include <iostream>
+using namespace std;
+class Penguin;
+class Fish;
+class KillerWhale;
 
 class Sea
 {
-public:
-  Sea(const short gridSize);
-  friend ostream& operator<<(ostream &os, Sea &s);
-  // Accessor and Mutator functions as needed go here
-private: 
-  char seaWorld[25][25]; // Array representing the sea 
-  short seaWorldSize; // Actual size of sea world. Must be less than 25
-  //Add any other member variables as needed
-  void clear(); // Clears the entire sea
-  void populate(Penguin pengArr[], Fish fishArr[],); // Place fish, penguins, and whales onto sea grid
+  private: 
+    char arr[25][25];
+    short sizeOfSeaWorld;
+    void clear(Sea &s);
+    void populate(Penguin arrPeng[], Fish arrFish[], KillerWhale &whale1, KillerWhale &whale2);
+  public:
+    Sea(short gridSize, Penguin arrPeng[], Fish arrFish[], KillerWhale &whale1, KillerWhale &whale2);
+    friend ostream & operator<<(ostream &out, Sea &s);
+    int getSize();
+    bool filled(int x, int y);
+    void place(char c, int x, int y);
 };
+
+#include "penguin.h"
+#include "fish.h"
+#include "killerWhale.h"
 
 #endif
