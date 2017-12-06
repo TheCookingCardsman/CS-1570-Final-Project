@@ -3,28 +3,27 @@
 //Section: D
 //Instructor: Dr. Taylor
 
-#ifndef FISH_H
-#define FISH_H
-class Sea;
+#ifndef KILLERWHALE_H
+#define KILLERWHALE_H
+class Penguin;
+class Fish;
 
-class Fish
+class KillerWhale
 {
   private:
-    int foodValue;
     int positionX;
     int positionY;
-    bool alive;
+    int killTally;
   public:
-    Fish();
+    KillerWhale();
     int getPositionX();
     int getPositionY();
     void setPositionX(int change);
     void setPositionY(int change);
-    void moveFish(Sea &seaGrid);
-    int getFoodValue();
-    void setDead();
+    void moveWhale(Sea &seaGrid, Penguin pengs[], Fish fishies[], int sizeOfPengs, int sizeOfFishies);
 };
 
-#include "sea.h"
+#include "penguin.h"
+#include "fish.h"
 
 #endif
