@@ -1,20 +1,19 @@
-#ifndef FISH_H
-#define FISH_H
+#ifndef KILLERWHALE_H
+#define KILLERWHALE_H
 
-class Fish
+class KillerWhale
 {
   private:
-    int foodValue;
     int positionX;
     int positionY;
-    bool alive;
+    int killTally;
   public:
-    Fish();
+    KillerWhale();
     int getPositionX();
     int getPositionY();
     void setPositionX(int change);
     void setPositionY(int change);
-    void moveFishGetOutTheWayGetOutTheWayFishGetOutTheWay();
+    void moveFishGetOutTheWayGetOutTheWayFishGetOutTheWay(Penguin arr[], int size);
 };
 
 #endif
